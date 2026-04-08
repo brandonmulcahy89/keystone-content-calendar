@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import type { Post, StatusKey } from '@/types';
 import { SEED_POSTS } from '@/lib/seed';
 
-const STORAGE_KEY = 'keystone-content-posts';
+const STORAGE_KEY = 'keystone-content-posts-v2';
 
 function loadPosts(): Post[] {
   try {

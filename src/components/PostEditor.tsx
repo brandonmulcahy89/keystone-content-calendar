@@ -4,6 +4,14 @@ import { PILLARS, STATUSES, PLATFORMS, FORMATS } from '@/types';
 import { TEMPLATES } from '@/lib/templates';
 import { getHashtagString, PINTEREST_KEYWORDS } from '@/lib/hashtags';
 
+// Image generation note for Emma
+const IMAGE_TIPS: Record<string, string> = {
+  reel: '🎬 REEL: Film vertical (9:16). Use your phone. Raw audio works best. 15-60 seconds.',
+  story: '⭕ STORY: Vertical (9:16). Add stickers, polls, countdowns. Links if 10k+ followers.',
+  post: '🖼️ POST: Square (1:1) or 4:5. High-res photo. Good lighting. Show the finished product.',
+  carousel: '📚 CAROUSEL: 1:1 slides. First slide = hook. 3-10 slides. Design in Canva or use photos.',
+};
+
 interface Props {
   post?: Post | null;
   defaultDate?: string;
@@ -207,6 +215,19 @@ export default function PostEditor({ post, defaultDate, onSave, onUpdate, onDele
               placeholder="Strategy notes, shoot details, boost budget..."
               style={{ ...inputStyle, resize: 'vertical' }}
             />
+          </div>
+          {/* Image/media guidance */}
+          <div className="p-3 rounded-lg" style={{ background: 'rgba(232, 168, 56, 0.08)', border: '1px solid rgba(232, 168, 56, 0.2)' }}>
+            <div className="text-xs font-semibold mb-1" style={{ color: 'var(--color-accent)' }}>📷 Media Guide</div>
+            <div className="text-[11px] mb-1.5" style={{ color: 'var(--color-muted)' }}>
+              {IMAGE_TIPS[format] || IMAGE_TIPS.post}
+            </div>
+            <div className="text-[10px] space-y-0.5" style={{ color: 'var(--color-muted)' }}>
+              <div>→ Check the project photo folder on OneDrive for finished project shots</div>
+              <div>→ Shop/process videos: film on your phone, vertical, raw audio</div>
+              <div>→ Before photos: check the measure sheet folder for each job</div>
+              <div>→ Graphics/text overlays: use Canva (keystone brand kit is saved)</div>
+            </div>
           </div>
         </div>
 
