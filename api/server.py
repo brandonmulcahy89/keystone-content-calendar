@@ -127,6 +127,33 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         body = self._body()
+        if self.path == "/generate-month":
+            # Auto-generate a month of MWF content
+            from generate import generate_month
+            year = body.get("year", datetime.now().year)
+            month = body.get("month", datetime.now().month)
+            try:
+                posts = generate_month(year, month)
+                self._json({"generated": len(posts), "posts": posts})
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+            return
+
+        if self.path == "/generate-image":
+            # Generate image via Nano Banana
+            from generate import generate_image
+            prompt = body.get("prompt", "")
+            filename = body.get("filename", f"post-{datetime.now().strftime('%Y%m%d%H%M%S')}.png")
+            try:
+                path = generate_image(prompt, filename)
+                if path:
+                    self._json({"ok": True, "path": path})
+                else:
+                    self._json({"error": "Image generation not available"}, 500)
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+            return
+
         if self.path == "/posts":
             import uuid
             db = sqlite3.connect(str(DB_PATH))

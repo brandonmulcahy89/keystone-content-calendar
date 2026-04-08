@@ -10,14 +10,39 @@ import TemplateLibrary from '@/components/TemplateLibrary';
 type View = 'calendar' | 'kanban' | 'templates';
 
 export default function App() {
-  const { posts, addPost, updatePost, deletePost, movePost } = usePosts();
+  const { posts, addPost, updatePost, deletePost, movePost, refetch } = usePosts();
   const [view, setView] = useState<View>('calendar');
   const [currentMonth, setCurrentMonth] = useState(new Date(2026, 3, 1)); // April 2026
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [newPostDate, setNewPostDate] = useState<string | null>(null);
   const [templatePost, setTemplatePost] = useState<CaptionTemplate | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   const showEditor = editingPost !== null || newPostDate !== null || templatePost !== null;
+
+  const API_URL = import.meta.env.VITE_API_URL || 'https://midlands-mario-msie-temperature.trycloudflare.com';
+
+  async function handleGenerateMonth() {
+    if (!confirm(`Generate AI content for ${currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}? This will create posts for every Monday, Wednesday, and Friday.`)) return;
+    setGenerating(true);
+    try {
+      const res = await fetch(`${API_URL}/generate-month`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1 }),
+      });
+      const data = await res.json();
+      if (data.generated) {
+        alert(`Generated ${data.generated} posts!`);
+        refetch();
+      } else {
+        alert(`Error: ${data.error || 'Unknown'}`);
+      }
+    } catch (err) {
+      alert('Failed to generate — check if the API server is running');
+    }
+    setGenerating(false);
+  }
 
   function handleUseTemplate(template: CaptionTemplate) {
     setTemplatePost(template);
@@ -57,8 +82,16 @@ export default function App() {
               </button>
             ))}
             <button
+              onClick={handleGenerateMonth}
+              disabled={generating}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg ml-2 disabled:opacity-50"
+              style={{ background: 'var(--color-pillar-trend)', color: 'white' }}
+            >
+              {generating ? '⏳ Generating...' : '🤖 Generate Month'}
+            </button>
+            <button
               onClick={() => setNewPostDate(new Date().toISOString().split('T')[0])}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg ml-2"
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg"
               style={{ background: 'var(--color-accent)', color: 'var(--color-bg)' }}
             >
               + New Post
