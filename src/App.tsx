@@ -20,7 +20,7 @@ export default function App() {
 
   const showEditor = editingPost !== null || newPostDate !== null || templatePost !== null;
 
-  const API_URL = import.meta.env.VITE_API_URL || 'https://midlands-mario-msie-temperature.trycloudflare.com';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://mentor-releases-streams-pam.trycloudflare.com';
 
   async function handleGenerateMonth() {
     const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
