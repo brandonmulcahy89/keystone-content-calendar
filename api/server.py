@@ -128,11 +128,27 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         body = self._body()
         if self.path == "/generate-month":
-            # Auto-generate a month of MWF content
             from generate import generate_month
             year = body.get("year", datetime.now().year)
             month = body.get("month", datetime.now().month)
+            replace = body.get("replace", False)
+
             try:
+                db = sqlite3.connect(str(DB_PATH))
+                # Check if month already has posts
+                month_prefix = f"{year}-{month:02d}"
+                existing = db.execute("SELECT COUNT(*) FROM posts WHERE date LIKE ?", (f"{month_prefix}%",)).fetchone()[0]
+
+                if existing > 0 and replace:
+                    # Delete existing posts for this month before regenerating
+                    db.execute("DELETE FROM posts WHERE date LIKE ?", (f"{month_prefix}%",))
+                    db.commit()
+                elif existing > 0 and not replace:
+                    db.close()
+                    self._json({"error": f"Month {month_prefix} already has {existing} posts. Send replace=true to overwrite.", "existing": existing})
+                    return
+                db.close()
+
                 posts = generate_month(year, month)
                 self._json({"generated": len(posts), "posts": posts})
             except Exception as e:

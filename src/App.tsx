@@ -23,22 +23,42 @@ export default function App() {
   const API_URL = import.meta.env.VITE_API_URL || 'https://midlands-mario-msie-temperature.trycloudflare.com';
 
   async function handleGenerateMonth() {
-    if (!confirm(`Generate AI content for ${currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}? This will create posts for every Monday, Wednesday, and Friday.`)) return;
+    const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth() + 1;
+
     setGenerating(true);
     try {
-      const res = await fetch(`${API_URL}/generate-month`, {
+      // First try without replace
+      let res = await fetch(`${API_URL}/generate-month`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1 }),
+        body: JSON.stringify({ year, month }),
       });
-      const data = await res.json();
-      if (data.generated) {
-        alert(`Generated ${data.generated} posts!`);
-        refetch();
-      } else {
-        alert(`Error: ${data.error || 'Unknown'}`);
+      let data = await res.json();
+
+      // If month already has posts, ask to replace
+      if (data.existing) {
+        if (confirm(`${monthName} already has ${data.existing} posts. Replace them with fresh AI-generated content?`)) {
+          res = await fetch(`${API_URL}/generate-month`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ year, month, replace: true }),
+          });
+          data = await res.json();
+        } else {
+          setGenerating(false);
+          return;
+        }
       }
-    } catch (err) {
+
+      if (data.generated) {
+        alert(`Generated ${data.generated} posts for ${monthName}!`);
+        await refetch();
+      } else if (data.error) {
+        alert(`Error: ${data.error}`);
+      }
+    } catch {
       alert('Failed to generate — check if the API server is running');
     }
     setGenerating(false);
