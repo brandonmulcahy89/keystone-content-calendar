@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { Post, StatusKey } from '@/types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://rod-skirt-voters-variety.trycloudflare.com';
+const API_URL = import.meta.env.VITE_API_URL || 'https://midlands-mario-msie-temperature.trycloudflare.com';
 
 export function usePosts() {
   const [posts, setPosts] = useState<Post[]>([]);
