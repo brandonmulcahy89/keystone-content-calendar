@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Post, PillarKey, StatusKey, PlatformKey, FormatKey } from '@/types';
 import { PILLARS, STATUSES, PLATFORMS, FORMATS } from '@/types';
 import { TEMPLATES } from '@/lib/templates';
+import { getHashtagString, PINTEREST_KEYWORDS } from '@/lib/hashtags';
 
 interface Props {
   post?: Post | null;
@@ -44,6 +45,18 @@ export default function PostEditor({ post, defaultDate, onSave, onUpdate, onDele
       onSave(data);
     }
     onClose();
+  }
+
+  function addHashtags() {
+    const tags = getHashtagString(pillar, platforms, format);
+    if (tags) {
+      setCaption(prev => prev.trim() + '\n\n' + tags);
+    }
+    // Show Pinterest keywords if Pinterest is selected
+    if (platforms.includes('pinterest')) {
+      const keywords = PINTEREST_KEYWORDS[pillar] || [];
+      setNotes(prev => prev + (prev ? '\n\n' : '') + 'Pinterest keywords: ' + keywords.join(', '));
+    }
   }
 
   function handleDelete() {
@@ -159,13 +172,22 @@ export default function PostEditor({ post, defaultDate, onSave, onUpdate, onDele
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-semibold" style={{ color: 'var(--color-muted)' }}>Caption</label>
-              <button
-                onClick={applyTemplate}
-                className="text-[10px] font-semibold px-2 py-1 rounded"
-                style={{ background: 'var(--color-accent)', color: 'var(--color-bg)' }}
-              >
-                Apply Template
-              </button>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={addHashtags}
+                  className="text-[10px] font-semibold px-2 py-1 rounded"
+                  style={{ background: 'var(--color-pillar-trend)', color: 'white' }}
+                >
+                  # Add Hashtags
+                </button>
+                <button
+                  onClick={applyTemplate}
+                  className="text-[10px] font-semibold px-2 py-1 rounded"
+                  style={{ background: 'var(--color-accent)', color: 'var(--color-bg)' }}
+                >
+                  Apply Template
+                </button>
+              </div>
             </div>
             <textarea
               value={caption}
