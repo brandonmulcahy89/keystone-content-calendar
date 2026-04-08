@@ -1,53 +1,53 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Post, StatusKey } from '@/types';
-import { SEED_POSTS } from '@/lib/seed';
 
-const STORAGE_KEY = 'keystone-content-posts-v2';
-
-function loadPosts(): Post[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {}
-  // First load — use seed data
-  const seeded = SEED_POSTS.map(p => ({ ...p, user_id: 'local' }));
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-  return seeded;
-}
+const API_URL = import.meta.env.VITE_API_URL || 'https://rod-skirt-voters-variety.trycloudflare.com';
 
 export function usePosts() {
-  const [posts, setPosts] = useState<Post[]>(loadPosts);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const save = useCallback((updated: Post[]) => {
-    setPosts(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  const fetchPosts = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/posts`);
+      const data = await res.json();
+      setPosts(data);
+    } catch (err) {
+      console.error('Failed to fetch posts:', err);
+    }
+    setLoading(false);
   }, []);
 
-  const addPost = useCallback((post: Omit<Post, 'id' | 'created_at' | 'user_id'>) => {
-    const newPost: Post = {
-      ...post,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-      user_id: 'local',
-    };
-    save([...posts, newPost]);
-    return newPost;
-  }, [posts, save]);
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
-  const updatePost = useCallback((id: string, updates: Partial<Post>) => {
-    save(posts.map(p => p.id === id ? { ...p, ...updates } : p));
-  }, [posts, save]);
+  const addPost = useCallback(async (post: Omit<Post, 'id' | 'created_at' | 'user_id'>) => {
+    await fetch(`${API_URL}/posts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(post),
+    });
+    await fetchPosts();
+  }, [fetchPosts]);
 
-  const deletePost = useCallback((id: string) => {
-    save(posts.filter(p => p.id !== id));
-  }, [posts, save]);
+  const updatePost = useCallback(async (id: string, updates: Partial<Post>) => {
+    await fetch(`${API_URL}/posts/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    await fetchPosts();
+  }, [fetchPosts]);
 
-  const movePost = useCallback((id: string, status: StatusKey) => {
-    save(posts.map(p => p.id === id ? { ...p, status } : p));
-  }, [posts, save]);
+  const deletePost = useCallback(async (id: string) => {
+    await fetch(`${API_URL}/posts/${id}`, { method: 'DELETE' });
+    await fetchPosts();
+  }, [fetchPosts]);
 
-  return { posts, addPost, updatePost, deletePost, movePost };
+  const movePost = useCallback(async (id: string, status: StatusKey) => {
+    await updatePost(id, { status });
+  }, [updatePost]);
+
+  return { posts, loading, addPost, updatePost, deletePost, movePost, refetch: fetchPosts };
 }
